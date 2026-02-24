@@ -1,12 +1,15 @@
 from fastapi import FastAPI, BackgroundTasks
 from pydantic import BaseModel
 from core.orchestrator import Orchestrator
+from api.routers.audit import router as audit_router
 import uvicorn
 import asyncio
 
 app = FastAPI(title="JUNE API", description="Personal AI Agent API")
 
 orchestrator = Orchestrator()
+
+app.include_router(audit_router)
 
 class ChatRequest(BaseModel):
     message: str

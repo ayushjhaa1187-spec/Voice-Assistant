@@ -10,6 +10,8 @@ from agents.calendar_agent import CalendarAgent
 from agents.whatsapp_agent import WhatsAppAgent
 from agents.search_agent import SearchAgent
 from agents.task_agent import TaskAgent
+from agents.system_agent import SystemAgent
+from agents.file_agent import FileAgent
 
 class Orchestrator:
     def __init__(self):
@@ -26,6 +28,8 @@ class Orchestrator:
             "whatsapp": WhatsAppAgent(),
             "search": SearchAgent(),
             "tasks": TaskAgent(),
+            "system": SystemAgent(),
+            "file": FileAgent(),
         }
 
     async def process(self, user_input: str) -> str:
@@ -61,8 +65,15 @@ class Orchestrator:
         params = step.get("params", {})
 
         if agent_name in self.agents:
-            agent = self.agents[agent_name]
-            return await agent.execute(action, **params)
+            try:
+                agent = self.agents[agent_name]
+                # Check if agent method is async (inspect or just await)
+                if asyncio.iscoroutinefunction(agent.execute):
+                    return await agent.execute(action, **params)
+                else:
+                    return agent.execute(action, **params)
+            except Exception as e:
+                return f"Error executing agent {agent_name}: {e}"
 
         # Fallback to LLM
         return await self.llm_router.query(step.get("prompt", ""))
